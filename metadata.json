@@ -1,0 +1,5 @@
+{
+  "name": "MotivateAI",
+  "description": "An AI-powered web application that helps users generate complete motivational video packages, including scripts, voiceovers, thumbnails, and metadata, ready for upload to platforms like YouTube.",
+  "requestFramePermissions": []
+}
