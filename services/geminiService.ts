@@ -1,15 +1,19 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { VoiceOption, ScriptData, Tone } from '../types';
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.GEMINI_API_KEY;
 
 if (!API_KEY) {
-  throw new Error("API_KEY environment variable not set");
+  console.warn("GEMINI_API_KEY environment variable not set. API calls will fail.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export const generateScript = async (tone: Tone): Promise<ScriptData> => {
+    if (!ai) {
+        throw new Error("API key not configured. Please set GEMINI_API_KEY environment variable.");
+    }
+    
     const prompt = `
         Generate a premium, cinematic motivational script for a 30-60 second video.
         The desired tone is: "${tone}".
@@ -53,6 +57,10 @@ export const generateScript = async (tone: Tone): Promise<ScriptData> => {
 };
 
 export const generateSpeech = async (text: string, voice: VoiceOption): Promise<string> => {
+    if (!ai) {
+        throw new Error("API key not configured. Please set GEMINI_API_KEY environment variable.");
+    }
+    
     const voiceName = voice === 'male' ? 'Kore' : 'Puck'; // Example voices
     
     const response = await ai.models.generateContent({
@@ -76,6 +84,10 @@ export const generateSpeech = async (text: string, voice: VoiceOption): Promise<
 };
 
 export const generateMetadata = async (script: string): Promise<{ title: string; description: string }> => {
+    if (!ai) {
+        throw new Error("API key not configured. Please set GEMINI_API_KEY environment variable.");
+    }
+    
     const prompt = `
         Based on the following motivational script, generate metadata for a video to be posted on YouTube and Instagram.
         
@@ -114,6 +126,10 @@ export const generateMetadata = async (script: string): Promise<{ title: string;
 
 
 export const generateThumbnail = async (quote: string): Promise<string> => {
+    if (!ai) {
+        throw new Error("API key not configured. Please set GEMINI_API_KEY environment variable.");
+    }
+    
     const prompt = `
         Create a premium, modern, and visually striking thumbnail image for a motivational YouTube video.
         The thumbnail must feature the quote: "${quote}".
