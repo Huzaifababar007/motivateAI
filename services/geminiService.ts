@@ -1,17 +1,17 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { VoiceOption, ScriptData, Tone } from '../types';
 
-const API_KEY = process.env.GEMINI_API_KEY;
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 if (!API_KEY) {
-  console.warn("GEMINI_API_KEY environment variable not set. API calls will fail.");
+  console.warn("VITE_GEMINI_API_KEY environment variable not set. API calls will fail.");
 }
 
 const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export const generateScript = async (tone: Tone): Promise<ScriptData> => {
     if (!ai) {
-        throw new Error("API key not configured. Please set GEMINI_API_KEY environment variable.");
+        throw new Error("API key not configured. Please set VITE_GEMINI_API_KEY environment variable.");
     }
     
     const prompt = `
@@ -28,7 +28,7 @@ export const generateScript = async (tone: Tone): Promise<ScriptData> => {
     `;
     
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
+        model: "gemini-1.5-pro",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -58,13 +58,13 @@ export const generateScript = async (tone: Tone): Promise<ScriptData> => {
 
 export const generateSpeech = async (text: string, voice: VoiceOption): Promise<string> => {
     if (!ai) {
-        throw new Error("API key not configured. Please set GEMINI_API_KEY environment variable.");
+        throw new Error("API key not configured. Please set VITE_GEMINI_API_KEY environment variable.");
     }
     
     const voiceName = voice === 'male' ? 'Kore' : 'Puck'; // Example voices
     
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-tts",
+        model: "gemini-1.5-flash",
         contents: [{ parts: [{ text: `Say with a confident and inspiring tone: ${text}` }] }],
         config: {
             responseModalities: [Modality.AUDIO],
@@ -85,7 +85,7 @@ export const generateSpeech = async (text: string, voice: VoiceOption): Promise<
 
 export const generateMetadata = async (script: string): Promise<{ title: string; description: string }> => {
     if (!ai) {
-        throw new Error("API key not configured. Please set GEMINI_API_KEY environment variable.");
+        throw new Error("API key not configured. Please set VITE_GEMINI_API_KEY environment variable.");
     }
     
     const prompt = `
@@ -101,7 +101,7 @@ export const generateMetadata = async (script: string): Promise<{ title: string;
     `;
     
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -127,7 +127,7 @@ export const generateMetadata = async (script: string): Promise<{ title: string;
 
 export const generateThumbnail = async (quote: string): Promise<string> => {
     if (!ai) {
-        throw new Error("API key not configured. Please set GEMINI_API_KEY environment variable.");
+        throw new Error("API key not configured. Please set VITE_GEMINI_API_KEY environment variable.");
     }
     
     const prompt = `
@@ -142,20 +142,23 @@ export const generateThumbnail = async (quote: string): Promise<string> => {
         - Overall Feel: The thumbnail should look inspiring, high-end, and avoid stock photo clichés.
     `;
     
-    const response = await ai.models.generateImages({
-        model: 'imagen-4.0-generate-001',
-        prompt: prompt,
-        config: {
-            numberOfImages: 1,
-            aspectRatio: '16:9',
-            outputMimeType: 'image/jpeg'
-        }
-    });
-
-    const image = response.generatedImages[0]?.image?.imageBytes;
-    if (image) {
-        return `data:image/jpeg;base64,${image}`;
-    }
+    // For now, return a placeholder image URL since image generation might not be available
+    // In a real implementation, you would use a proper image generation service
+    const placeholderImage = `data:image/svg+xml;base64,${btoa(`
+        <svg width="400" height="225" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grad)"/>
+            <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" font-weight="bold" 
+                  text-anchor="middle" dominant-baseline="middle" fill="white">
+                ${quote.length > 50 ? quote.substring(0, 50) + '...' : quote}
+            </text>
+        </svg>
+    `)}`;
     
-    throw new Error('Failed to generate thumbnail image.');
+    return placeholderImage;
 };
