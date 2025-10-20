@@ -11,6 +11,20 @@ export class YouTubeService {
   ];
 
   static async authenticate(): Promise<{ accessToken: string; refreshToken: string; username: string }> {
+    // Check if API keys are configured
+    if (!this.CLIENT_ID || !this.API_KEY) {
+      // Return demo mode authentication
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            accessToken: 'demo_access_token',
+            refreshToken: 'demo_refresh_token',
+            username: 'DemoChannel'
+          });
+        }, 1000);
+      });
+    }
+
     return new Promise((resolve, reject) => {
       // Create OAuth2 flow
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -71,6 +85,18 @@ export class YouTubeService {
       thumbnail?: string;
     }
   ): Promise<{ videoId: string; url: string }> {
+    // Demo mode - simulate upload
+    if (accessToken === 'demo_access_token') {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            videoId: 'demo_video_id',
+            url: 'https://www.youtube.com/watch?v=demo_video_id'
+          });
+        }, 2000);
+      });
+    }
+
     // First, upload the video file
     const videoUploadResponse = await this.uploadVideoFile(accessToken, videoData.videoFile);
     
@@ -142,6 +168,19 @@ export class InstagramService {
   private static readonly SCOPES = ['user_profile', 'user_media'];
 
   static async authenticate(): Promise<{ accessToken: string; username: string }> {
+    // Check if API keys are configured
+    if (!this.CLIENT_ID) {
+      // Return demo mode authentication
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            accessToken: 'demo_access_token',
+            username: 'DemoAccount'
+          });
+        }, 1000);
+      });
+    }
+
     return new Promise((resolve, reject) => {
       const authUrl = `https://api.instagram.com/oauth/authorize?` +
         `client_id=${this.CLIENT_ID}&` +
@@ -196,6 +235,18 @@ export class InstagramService {
       thumbnail?: string;
     }
   ): Promise<{ mediaId: string; url: string }> {
+    // Demo mode - simulate upload
+    if (accessToken === 'demo_access_token') {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            mediaId: 'demo_media_id',
+            url: 'https://www.instagram.com/p/demo_media_id/'
+          });
+        }, 2000);
+      });
+    }
+
     // Instagram requires a two-step process: create media container, then publish
     
     // Step 1: Create media container

@@ -174,9 +174,15 @@ export const ConnectAccounts: React.FC<ConnectAccountsProps> = ({ onConnected, i
       
       {error && <p className="text-red-400 mb-4">{error}</p>}
       
-      <p className="text-xs text-gray-500 mb-8">
-        Connect your accounts to automatically upload videos to both platforms.
-      </p>
+      <div className="mb-8 p-4 bg-blue-900/20 border border-blue-500/50 rounded-lg">
+        <p className="text-blue-400 text-sm text-center">
+          <strong>Demo Mode:</strong> API keys not configured yet. Clicking "Connect" will simulate authentication. 
+          <br />
+          <span className="text-xs text-gray-400 mt-1 block">
+            To enable real uploads, set up YouTube and Instagram API keys (see SETUP.md)
+          </span>
+        </p>
+      </div>
 
       <div className="w-full flex justify-end">
         <button
