@@ -18,6 +18,8 @@ export interface ScriptData {
 export interface AccountConnection {
   connected: boolean;
   username: string | null;
+  accessToken?: string;
+  refreshToken?: string;
 }
 
 export interface Connections {

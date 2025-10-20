@@ -1,6 +1,7 @@
 import React, { useState, Fragment } from 'react';
 import type { Connections } from '../types';
 import { YoutubeIcon, InstagramIcon, CheckCircleIcon, LoadingSpinner, GoogleIcon } from './icons';
+import { SocialMediaService } from '../services/socialMediaService';
 
 interface ConnectAccountsProps {
   onConnected: (connections: Connections) => void;
@@ -36,21 +37,26 @@ const PLATFORM_DETAILS = {
   }
 }
 
-const SimulatedAuthModal: React.FC<{
+const AuthModal: React.FC<{
   platform: Platform;
   onClose: () => void;
-  onAllow: (platform: Platform, username: string) => void;
-}> = ({ platform, onClose, onAllow }) => {
+  onSuccess: (platform: Platform, username: string, accessToken: string, refreshToken?: string) => void;
+  onError: (error: string) => void;
+}> = ({ platform, onClose, onSuccess, onError }) => {
   const details = PLATFORM_DETAILS[platform];
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  const handleAllow = () => {
+  const handleAuthenticate = async () => {
     setIsAuthenticating(true);
-    setTimeout(() => {
-        onAllow(platform, details.simulatedUsername);
-        setIsAuthenticating(false);
-        onClose();
-    }, 1500)
+    try {
+      const result = await SocialMediaService.connectAccount(platform);
+      onSuccess(platform, result.username, result.accessToken);
+      onClose();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Authentication failed');
+    } finally {
+      setIsAuthenticating(false);
+    }
   }
 
   return (
@@ -76,7 +82,7 @@ const SimulatedAuthModal: React.FC<{
           </div>
           <div className="bg-gray-900/50 p-6 rounded-b-2xl flex flex-col items-center gap-4">
              <button
-                onClick={handleAllow}
+                onClick={handleAuthenticate}
                 disabled={isAuthenticating}
                 className="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 transition-colors"
              >
@@ -93,17 +99,29 @@ const SimulatedAuthModal: React.FC<{
 export const ConnectAccounts: React.FC<ConnectAccountsProps> = ({ onConnected, initialConnections }) => {
   const [connections, setConnections] = useState<Connections>(initialConnections);
   const [modalPlatform, setModalPlatform] = useState<Platform | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleConnectClick = (platform: Platform) => {
     if (connections[platform].connected) return;
     setModalPlatform(platform);
+    setError(null);
   };
   
-  const handleAllowAccess = (platform: Platform, username: string) => {
+  const handleAuthSuccess = (platform: Platform, username: string, accessToken: string, refreshToken?: string) => {
     setConnections(prev => ({
       ...prev,
-      [platform]: { connected: true, username: username }
-    }))
+      [platform]: { 
+        connected: true, 
+        username: username,
+        accessToken: accessToken,
+        refreshToken: refreshToken
+      }
+    }));
+    setError(null);
+  };
+
+  const handleAuthError = (errorMessage: string) => {
+    setError(errorMessage);
   };
 
   const handleNext = () => {
@@ -114,7 +132,14 @@ export const ConnectAccounts: React.FC<ConnectAccountsProps> = ({ onConnected, i
 
   return (
     <div className="flex flex-col items-center text-center">
-      {modalPlatform && <SimulatedAuthModal platform={modalPlatform} onClose={() => setModalPlatform(null)} onAllow={handleAllowAccess}/>}
+      {modalPlatform && (
+        <AuthModal 
+          platform={modalPlatform} 
+          onClose={() => setModalPlatform(null)} 
+          onSuccess={handleAuthSuccess}
+          onError={handleAuthError}
+        />
+      )}
 
       <h2 className="text-2xl font-bold text-white mb-2">Connect Your Accounts</h2>
       <p className="text-gray-400 mb-8">
@@ -147,7 +172,11 @@ export const ConnectAccounts: React.FC<ConnectAccountsProps> = ({ onConnected, i
         })}
       </div>
       
-      <p className="text-xs text-gray-500 mb-8">(Connections are simulated for this demo)</p>
+      {error && <p className="text-red-400 mb-4">{error}</p>}
+      
+      <p className="text-xs text-gray-500 mb-8">
+        Connect your accounts to automatically upload videos to both platforms.
+      </p>
 
       <div className="w-full flex justify-end">
         <button
